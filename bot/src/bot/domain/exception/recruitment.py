@@ -1,0 +1,2 @@
+class RecruitmentNotFound(BaseException):
+    pass

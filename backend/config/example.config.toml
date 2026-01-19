@@ -1,0 +1,17 @@
+[database]
+url = "postgresql+asyncpg://postgres:password@db:5432/bot"
+
+[broker]
+url = "amqp://user:password@rabbitmq:5672/"
+
+[s3]
+endpoint = "http://s3:9000"
+access_key = "user"
+secret_key = "password"
+verify = false
+promo_bucket = "promo"
+candidate_bucket = "candidate"
+
+[template]
+candidate_bucket = "candidate"
+candidate_name_template = "Шаблон собеседования.docx"

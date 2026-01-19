@@ -1,0 +1,28 @@
+{$URI} {
+    tls {$TLS}
+
+    log {
+        output stdout
+        format json
+        level WARN
+    }
+
+    reverse_proxy /console/api/* s3:9000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+    }
+
+    handle_path /console/* {
+        reverse_proxy s3:9001 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+        }
+    }
+
+    handle_path /* {
+        reverse_proxy s3:9000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+        }
+    }
+}

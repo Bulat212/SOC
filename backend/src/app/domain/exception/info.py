@@ -1,0 +1,2 @@
+class InfoNotFound(BaseException):
+    pass

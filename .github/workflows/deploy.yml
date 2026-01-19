@@ -1,0 +1,38 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  scp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Copy project
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.key }}
+          password: ${{ secrets.password }}
+          source: ./backend, ./bot, ./caddy, ./docker-compose.yml
+          target: /home/wolf/scicombot
+
+  run_project:
+    needs: scp
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run project
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.key }}
+          password: ${{ secrets.password }}
+          script: |
+            cd ${{ secrets.DIR }}
+            docker compose build
+            docker compose up -d

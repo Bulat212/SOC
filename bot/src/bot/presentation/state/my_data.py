@@ -1,0 +1,28 @@
+from aiogram.fsm.state import StatesGroup, State
+
+
+class MyDataState(StatesGroup):
+    start = State()
+    recruitment = State()
+    first_name = State()
+    patronymic = State()
+    last_name = State()
+    birthdate = State()
+    subject = State()
+    invalid_birthdate = State()
+    invalid_period_birthdate = State()
+    nationality = State()
+    invalid_nationality = State()
+    military_station = State()
+    military_station_address = State()
+    university = State()
+    graduation_date = State()
+    invalid_graduation_date = State()
+    direction_training = State()
+    average_score = State()
+    invalid_average_score = State()
+    low_average_score = State()
+    phone_number = State()
+    invalid_phone_number = State()
+    find_out = State()
+    save = State()

@@ -1,0 +1,2 @@
+class DelegateNotFound(BaseException):
+    pass

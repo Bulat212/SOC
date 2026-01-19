@@ -1,0 +1,2 @@
+class AnswerNotFound(BaseException):
+    pass

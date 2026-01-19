@@ -1,0 +1,15 @@
+[bot]
+token = "BOT_TOKEN"
+sticker_id = "CAACAgIAAxkBAAENwddnqcFsGGB37e1hY8PxkkujXkE8rwACKgMAAs-71A4f8rUYf2WfMDYE"
+telegram_api_url = "http://localhost:8081/"
+group_id = 1
+questions_topic_id = 1
+new_registration_topic_id = 1
+channel_id = 1
+
+
+[broker]
+url = "amqp://user:password@localhost:5672/"
+
+[redis]
+url = "redis://default:password@localhost:6379/0"

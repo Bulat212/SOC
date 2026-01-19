@@ -1,0 +1,1 @@
+FORMAT_BIRTHDATE = "%d.%m.%Y"
