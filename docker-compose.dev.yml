@@ -63,10 +63,27 @@ services:
     env_file: .env
     build: ./backend
     command: uv run faststream run --factory app.main:get_faststream_app --restart
+    depends_on:
+      - rabbitmq
+    restart: always
     volumes:
       - ./backend/config/config.toml:/app/config.toml
       - uv_cache:/root/.cache/uv
       - ./backend/src:/app/src
+
+  formparser:
+    container_name: nr_form_parser
+    build: ./form_parser
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+    depends_on:
+      - rabbitmq
+    volumes:
+      - uv_cache:/root/.cache
+
 
 volumes:
   data_telegram:
