@@ -6,6 +6,7 @@ from faststream.rabbit import RabbitQueue, RabbitRouter
 from app.application.dto.candidate import (
     AddCandidateDTO,
     AddCandidateIDDTO,
+    FormDataDTO,
     UpdateCandidateDTO,
     CandidateDocumentNameDTO,
 )
@@ -14,6 +15,7 @@ from app.application.usecase.candidate import CandidateUseCase
 from app.presentation.schema.candidate import (
     AddCandidateSchema,
     DeleteCandidateSchema,
+    FormDataSchema,
     GetCandidateSchema,
     AddCandidateIDSchema,
     UpdateCandidateSchema,
@@ -170,3 +172,19 @@ async def delete_candidate(
 ):
     candidate_id = data.candidate_id
     await usecase.delete_candidate(candidate_id)
+
+
+@candidate_router.subscriber(
+    queue=RabbitQueue(
+        "update_candidate_from_yandex",
+        auto_delete=True,
+    ),
+)
+@inject
+async def update_form_from_yandex(
+    data: FormDataSchema,
+    usecase: FromDishka[CandidateUseCase],
+):
+    request = FormDataDTO(**data.model_dump())
+    await usecase.update_for_form(request)
+    await usecase.add_candidate_from_form(request)

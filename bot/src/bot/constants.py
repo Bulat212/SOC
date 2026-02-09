@@ -36,7 +36,7 @@ FORMAT_BIRTHDATE = "%d.%m.%Y"
 
 FORMAT_DATE = "%d.%m.%Y"
 
-MAX_AGE = 30
+MAX_AGE = 29
 
 MIN_AGE = 18
 

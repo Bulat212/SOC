@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, MenuButtonWebApp, WebAppInfo
 from aiogram_dialog import DialogManager, ShowMode, StartMode
 from aiogram_dialog.widgets.kbd import Button, ManagedCalendar
 from bot.application.dto.candidate import AddCandidateDTO
@@ -11,9 +11,19 @@ from bot.presentation.button.start_button import StartCandidateKeyboardButton
 from bot.presentation.state.my_data import MyDataState
 from bot.presentation.state.registration import RegistrationCandidateState
 from bot.config import BotConfig
-from bot.presentation.utils.candidate import format_new_candidate_message
+from bot.presentation.utils.candidate import create_yandex_form_url, format_new_candidate_message
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
+
+
+async def agreement_click(
+        cq: CallbackQuery,
+        button: Button,
+        dialog_manager: DialogManager,
+) -> None:
+    await dialog_manager.switch_to(
+        state=RegistrationCandidateState.start,
+    )
 
 
 async def start_click(
@@ -124,7 +134,7 @@ async def right_click(
             FORMAT_BIRTHDATE,
         ),
     )
-    await usecase.add_candidate(request)
+    candidate = await usecase.add_candidate(request)
     keyboard = StartCandidateKeyboardButton(
         resize_keyboard=True,
         one_time_keyboard=True,
@@ -139,6 +149,17 @@ async def right_click(
 
     text = format_new_candidate_message(data)
     bot = cq.bot
+
+    url = create_yandex_form_url(candidate, request.username)
+
+    await bot.set_chat_menu_button(
+        chat_id=cq.message.chat.id,
+        menu_button=MenuButtonWebApp(
+            text="Open",
+            web_app=WebAppInfo(url=url)
+        )
+    )
+
     await bot.send_message(
                 chat_id=config.group_id,
                 text=text,
@@ -146,10 +167,13 @@ async def right_click(
                 parse_mode="HTML",
             )
 
+    await usecase.new_registration_soc(request)
+
     await dialog_manager.reset_stack()
 
 
 async def set_birthdate_click(
+    
         callback: CallbackQuery,
         widget: ManagedCalendar,
         manager: DialogManager,

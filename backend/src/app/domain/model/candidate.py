@@ -44,3 +44,64 @@ class CandidateDocument:
     candidate_id: str
     name: str
     url: str
+
+
+@dataclass(slots=True, kw_only=True)
+class CandidateFormData:
+    id: str | None = field(default=None)
+    telegram_id: str | None = field(default=None)
+    candidate_id: str | None = field(default=None)
+    first_name: str
+    last_name: str
+    patronymic: str
+    birthplace: str
+    birthdate: datetime.date
+    graduation_date: datetime.date
+    nationality: str
+    tg_username: str | None = field(default=None)
+    mail: str
+    registration_address: str
+    actual_address: str
+    family_status: str
+    military_station: str
+    health_category: str
+    university: str
+    diploma: str
+    date_issue_diploma: datetime.date
+    direction_training: str
+    average_score: float
+    diploma_topic: str
+    international_articles: str
+    patents: str
+    vac_articles: str
+    rationalization: str
+    rinc_articles: str
+    registration_certificates: str
+    scientific_work_experience: str
+    international_olympiads: str
+    president_scholarship: str
+    russian_olympiads: str
+    government_scholarship: str
+    grant: str
+    regional_olympiads: str
+    city_olympiads: str
+    postgraduate_diploma: str
+    unused_academic_degree: str
+    useful_academic_degree: str
+    commercial_experience: str
+    OPK_experience: str
+    exp_research_assistant: str
+    areas_research: str
+    programming_languages: str
+    programs: str
+    secret: str
+    height: str
+    weight: str
+    sporting_achievements: str
+    other_sporting_achievements: str
+    short_run: str
+    long_run: str
+    pull_ups: str
+    chronic_diseases: str
+    tattoos: str
+    find_out: str

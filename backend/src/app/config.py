@@ -20,6 +20,7 @@ class S3Config:
 class TemplateConfig:
     candidate_bucket: str
     candidate_name_template: str
+    candidate_name_template_full: str
 
 
 @dataclass(slots=True)

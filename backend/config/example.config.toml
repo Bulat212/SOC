@@ -15,3 +15,4 @@ candidate_bucket = "candidate"
 [template]
 candidate_bucket = "candidate"
 candidate_name_template = "Шаблон собеседования.docx"
+candidate_name_template_full = "Шаблон собеседования полный.docx"

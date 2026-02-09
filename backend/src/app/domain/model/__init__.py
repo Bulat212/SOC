@@ -1,5 +1,5 @@
 from .answer import Answer
-from .candidate import Candidate, CandidateQuote, CandidateDocument
+from .candidate import Candidate, CandidateQuote, CandidateDocument, CandidateFormData
 from .delegate import Delegate
 from .document import Document
 from .faq import Faq
@@ -15,6 +15,7 @@ __all__ = (
     "Candidate",
     "CandidateQuote",
     "CandidateDocument",
+    "CandidateFormData",
     "Delegate",
     "Document",
     "Faq",

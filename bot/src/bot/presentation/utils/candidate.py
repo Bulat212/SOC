@@ -1,5 +1,6 @@
 import datetime
 from bot.constants import FORMAT_BIRTHDATE
+from urllib.parse import urlencode
 
 
 def format_new_candidate_message(data: dict) -> str:
@@ -35,3 +36,30 @@ def format_new_candidate_message(data: dict) -> str:
         f"☎️ Номер телефона: <u>{data.get('phone_number')}</u>\n"
         f"🔗 Источник: <u>{data.get('find_out')}</u>"
     )
+
+
+def create_yandex_form_url(data, username) ->str: 
+
+    params = {
+        "first_name": data.first_name,
+        "last_name": data.last_name,
+        "patronymic": data.patronymic,
+        "telegram_id": data.telegram_id,
+        "candidate_id": data.id,
+        "tg_username": username,
+        "birthdate": data.birthdate,
+        "nationality": "nationality_rf",
+        "military_station": data.military_station,
+        "university": data.university,
+        "direction_training": data.direction_training,
+        "average_score": data.average_score,
+        "graduation_date": data.graduation_date,
+        "find_out": f"Узнал о научной роте: {data.find_out}",
+    }
+
+    url = "https://forms.yandex.ru/u/694be999d046887fae3691b6?" + urlencode(
+        params,
+        doseq=True,
+        encoding="utf-8",
+    )
+    return url

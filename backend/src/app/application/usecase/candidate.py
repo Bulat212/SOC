@@ -5,6 +5,7 @@ from typing import Any
 
 from app.application.dto.candidate import (
     AddCandidateDTO,
+    FormDataDTO,
     GetCandidateDTO,
     AddCandidateIDDTO,
     GetCandidatesDTO,
@@ -23,6 +24,7 @@ from app.application.interface.gateway.candidate import (
     ICandidateFormDBGateway,
     ICandidateApprovalDBGateway,
     ICandidateStatementDBGateway,
+    ICandidateYandexFormGateway,
 )
 from app.application.interface.gateway.recruitment import IRecruitmentDBGateway
 from app.application.interface.gateway.role import IRoleDBGateway
@@ -38,15 +40,17 @@ from app.domain.service.candidate import (
 )
 from app.domain.service.status import StatusService
 from app.domain.service.user import UserService
-
+from faststream.rabbit import RabbitBroker
 
 class CandidateUseCase:
     def __init__(
             self,
             candidate_db_gateway: ICandidateDBGateway,
+            candidate_yandex_form_db_gateway: ICandidateYandexFormGateway,
             candidate_form_db_gateway: ICandidateFormDBGateway,
             candidate_approval_db_gateway: ICandidateApprovalDBGateway,
             candidate_statement_db_gateway: ICandidateStatementDBGateway,
+            broker: RabbitBroker,
             user_db_gateway: IUserDBGateway,
             role_db_gateway: IRoleDBGateway,
             status_db_gateway: IStatusDBGateway,
@@ -61,9 +65,11 @@ class CandidateUseCase:
             template: ITemplate,
     ) -> None:
         self.candidate_db_gateway = candidate_db_gateway
+        self.candidate_yandex_form_db_gateway=candidate_yandex_form_db_gateway
         self.candidate_form_db_gateway = candidate_form_db_gateway
         self.candidate_approval_db_gateway = candidate_approval_db_gateway
         self.candidate_statement_db_gateway = candidate_statement_db_gateway
+        self.broker = broker
         self.user_db_gateway = user_db_gateway
         self.status_db_gateway = status_db_gateway
         self.recruitment_db_gateway = recruitment_db_gateway
@@ -204,7 +210,7 @@ class CandidateUseCase:
         await self._delete_form(
             context=context,
         )
-        await self._save_documents(data.copy())
+        await self._save_documents_full(data.copy())
         await self.db_session.commit()
         return GetCandidateDTO(**data)
 
@@ -296,6 +302,53 @@ class CandidateUseCase:
         async for val in self.minio.get_object(
                 bucket=self.config.template.candidate_bucket,
                 key=self.config.template.candidate_name_template,
+        ):
+            buffer.write(val)
+        file = await self.template.get_docx(
+            template=buffer,
+            context=context,
+        )
+        recruitment = await self.recruitment_db_gateway.get(
+            recruitment_id=context.get("recruitment_id"),
+        )
+        path_form = self.candidate_service.get_path_document(
+            name="Лист собеседования.docx",
+            recruitment=recruitment.name,
+            **context,
+        )
+        tasks = [
+            self.candidate_approval_db_gateway.get(
+                context.get("id"),
+            ),
+            self.candidate_statement_db_gateway.get(
+                context.get("id"),
+            ),
+        ]
+        result = await asyncio.gather(*tasks)
+        models = await self._load_task_documents(result)
+        await self.minio.put_object(
+            bucket=self.config.template.candidate_bucket,
+            key=path_form,
+            file=file,
+        )
+        await self._move_object(
+            context=context | {
+                "recruitment": recruitment.name,
+            },
+            models=models,
+        )
+        await self._save_form_url(
+            context=context,
+            url=f"{self.config.s3.endpoint}/"
+                f"{self.config.template.candidate_bucket}/{path_form}",
+        )
+
+
+    async def _save_documents_full(self, context: dict[str, Any]) -> None:
+        buffer = io.BytesIO()
+        async for val in self.minio.get_object(
+                bucket=self.config.template.candidate_bucket,
+                key=self.config.template.candidate_name_template_full,
         ):
             buffer.write(val)
         file = await self.template.get_docx(
@@ -502,3 +555,54 @@ class CandidateUseCase:
         await self.status_db_gateway.delete(candidate_id)
         await self.candidate_db_gateway.delete(candidate_id)
         await self.db_session.commit()
+
+
+    async def update_for_form(self, request: FormDataDTO):
+        candidate = await self.candidate_db_gateway.get(
+            candidate_id=request.candidate_id,
+            telegram_id=request.telegram_id,
+        )
+        context = self.candidate_service.get_candidate(candidate)      #составляем словарь из данных кандидата
+        candidate = self.candidate_service.update_candidate(           #обновляем модель кандидата из новых данных
+            candidate=candidate,
+            **asdict(request),
+        )
+        candidate_dict = self.candidate_service.update_candidate_from_form(     #тут словарь вернулся с полными данными и кандидатскими данными
+            candidate=candidate,
+            **asdict(request),
+        )
+
+        await self.broker.publish(
+            candidate_dict,
+            queue="candidate_new_yandex_form",
+        )
+        
+        await self.candidate_db_gateway.update(candidate=candidate) 
+        await self._delete_form(context=context,)
+        await self._save_documents_full(candidate_dict.copy())
+        await self.db_session.commit()
+        
+        return candidate_dict
+    
+
+    async def add_candidate_from_form(self, request: FormDataDTO):
+        candidate_form_db = await self.candidate_yandex_form_db_gateway.get(
+            telegram_id=request.telegram_id
+        )
+        if candidate_form_db == None:
+            candidate_form = self.candidate_service.add_candidate_data_from_form(
+                **asdict(request),
+                id=str(self.ulid_generator()),
+            )
+            candidate_form = await self.candidate_yandex_form_db_gateway.insert(candidate_form=candidate_form) 
+        
+        else:
+            new_candidate_form = self.candidate_service.update_candidate_form(    
+                candidate_form=candidate_form_db,
+                **asdict(request),
+            )
+            candidate_form = await self.candidate_yandex_form_db_gateway.update(candidate_form=new_candidate_form) 
+
+        await self.db_session.commit()
+        return candidate_form
+

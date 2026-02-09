@@ -32,6 +32,7 @@ from bot.presentation.getter.recruitment import (
     get_recruitments,
 )
 from bot.presentation.on_click.registration import (
+    agreement_click,
     start_click,
     recruitment_click,
     nationality_click,
@@ -55,11 +56,24 @@ def check_is_recruitments(
 
 dialog = Dialog(
     Window(
+        Const(
+            text="Для участия в отборе в научную роту необходимо согласие на обработку Ваших данных. ",
+        ),
+        Button(
+            text=Const(
+                text="Согласен",
+            ),
+            id="next_btn",
+            on_click=agreement_click,
+        ),
+        state=RegistrationCandidateState.agreement,
+    ),
+    Window(
         Case(
             texts={
                 True: Const(
                     text="Для того, чтобы принять участие в отборе в научную роту, "
-                         "ответьте на несколько вопросов.",
+                         "ответьте, пожалуйста, на 16 вопросов.",
                 ),
                 False: Const(
                     text="Совсем скоро Вы сможете принять участие "
@@ -81,13 +95,13 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="На какой призыв Вы хотите оставить заявку?",
+            text="📋 Вопрос 16 из 16\nНа какой призыв Вы хотите оставить заявку?",
         ),
         Group(
             ListGroup(
                 Button(
                     text=Format(
-                        text="{item[name]}",
+                        text="{item[name]}",    
                     ),
                     id="recruitment_btn",
                     on_click=recruitment_click,
@@ -103,7 +117,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="🇷🇺Являетесь ли Вы гражданином Российской Федерации?",
+            text="📋 Вопрос 1 из 16\n🇷🇺Являетесь ли Вы гражданином Российской Федерации?",
         ),
         Row(
             Button(
@@ -132,8 +146,15 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="🎓Имеется ли у Вас оконченное высшее техническое образование?",
+            text="📋 Вопрос 2 из 16\n🎓Имеется ли у Вас оконченное высшее техническое образование?",
         ),
+        Button(
+                text=Const(
+                    text="В процессе обучения",
+                ),
+                on_click=tertiary_education_click,
+                id="study_btn",
+            ),
         Row(
             Button(
                 text=Const(
@@ -161,7 +182,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите свою дату рождения в формате (дд.мм.гггг).",
+            text="📋 Вопрос 3 из 16\nНапишите свою дату рождения в формате (дд.мм.гггг).",
         ),
         MessageInput(
             func=set_birthdate,
@@ -179,7 +200,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Укажите Ваш город:",
+            text="📋 Вопрос 7 из 16\nУкажите Ваш город:",
         ),
         MessageInput(
             func=set_subject,
@@ -201,7 +222,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите Вашу Фамилию.",
+            text="📋 Вопрос 4 из 16\nНапишите Вашу Фамилию.",
         ),
         MessageInput(
             func=set_last_name,
@@ -210,7 +231,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите Ваше имя.",
+            text="📋 Вопрос 5 из 16\nНапишите Ваше имя.",
         ),
         MessageInput(
             func=set_first_name,
@@ -219,7 +240,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите Ваше отчество.",
+            text="📋 Вопрос 6 из 16\nНапишите Ваше отчество.",
         ),
         MessageInput(
             func=set_patronymic,
@@ -228,7 +249,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите полное название своего военного комиссариата:",
+            text="📋 Вопрос 8 из 16\nНапишите полное название своего военного комиссариата:",
         ),
         MessageInput(
             func=set_military_station,
@@ -237,7 +258,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите почтовый адрес и индекс "
+            text="📋 Вопрос 9 из 16\nНапишите почтовый адрес и индекс "
                  "своего военного комиссариата:",
         ),
         MessageInput(
@@ -247,7 +268,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите название своего ВУЗа.",
+            text="📋 Вопрос 10 из 16\nНапишите название своего ВУЗа.",
         ),
         MessageInput(
             func=set_university,
@@ -256,7 +277,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите дату окончания ВУЗа в формате (дд.мм.гггг).",
+            text="📋 Вопрос 11 из 16\nНапишите дату окончания ВУЗа в формате (дд.мм.гггг).",
         ),
         MessageInput(
             func=set_graduation_data,
@@ -274,7 +295,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите направление подготовки в ВУЗе.",
+            text="📋 Вопрос 12 из 16\nНапишите направление подготовки в ВУЗе.",
         ),
         MessageInput(
             func=set_direction_training,
@@ -283,7 +304,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Напишите средний балл по диплому (х.х).",
+            text="📋 Вопрос 13 из 16\nНапишите средний балл по диплому (х.х).",
         ),
         MessageInput(
             func=set_average_score,
@@ -309,7 +330,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Откуда Вы узнали о нас?",
+            text="📋 Вопрос 14 из 16\nОткуда Вы узнали о нас?",
         ),
         MessageInput(
             func=set_find_out,
@@ -318,7 +339,7 @@ dialog = Dialog(
     ),
     Window(
         Const(
-            text="Для связи с Вами, нам необходимо получить Ваш номер "
+            text="📋 Вопрос 15 из 16\nДля связи с Вами, нам необходимо получить Ваш номер "
                  "телефона. Нажмите на кнопку в меню или напишите его в чат.",
         ),
         MessageInput(

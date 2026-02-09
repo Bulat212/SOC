@@ -5,6 +5,7 @@ from aiobotocore.session import get_session as get_session_s3
 from dishka import Provider, Scope, from_context, provide, AnyOf
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from types_aiobotocore_s3.client import S3Client
+from faststream.rabbit import RabbitBroker
 
 from app.adapter.db.gateway.answer import AnswerDBGateway
 from app.adapter.db.gateway.candidate import (
@@ -12,6 +13,7 @@ from app.adapter.db.gateway.candidate import (
     CandidateFormDBGateway,
     CandidateApprovalDBGateway,
     CandidateStatementDBGateway,
+    CandidateYandexFormGateway,
 )
 from app.adapter.db.gateway.document import (
     PromoDocumentDBGateway,
@@ -36,6 +38,7 @@ from app.application.interface.gateway.candidate import (
     ICandidateFormDBGateway,
     ICandidateApprovalDBGateway,
     ICandidateStatementDBGateway,
+    ICandidateYandexFormGateway,
 )
 from app.application.interface.gateway.document import (
     IPromoDocumentDBGateway,
@@ -127,6 +130,15 @@ class BaseProvider(Provider):
     @provide(scope=Scope.REQUEST)
     async def get_template(self) -> AnyOf[Template, ITemplate]:
         return Template()
+    
+    @provide(scope=Scope.APP)
+    async def get_broker(
+        self,
+        config: ApplicationConfig,  
+    ) -> AsyncIterable[RabbitBroker]:
+        broker = RabbitBroker(config.broker.url)
+        async with broker:
+            yield broker
 
 
 class UserProvider(Provider):
@@ -211,6 +223,7 @@ class CandidateProvider(Provider):
     def get_candidates_usecase(
             self,
             candidate_db_gateway: ICandidateDBGateway,
+            candidate_yandex_form_db_gateway: ICandidateYandexFormGateway,
             candidate_document_db_gateway: ICandidateFormDBGateway,
             candidate_approval_db_gateway: ICandidateApprovalDBGateway,
             candidate_statement_db_gateway: ICandidateStatementDBGateway,
@@ -223,9 +236,11 @@ class CandidateProvider(Provider):
             minio: IMinIOClient,
             config: ApplicationConfig,
             template: ITemplate,
+            broker: RabbitBroker,
     ) -> CandidateUseCase:
         return CandidateUseCase(
             candidate_db_gateway=candidate_db_gateway,
+            candidate_yandex_form_db_gateway=candidate_yandex_form_db_gateway,
             candidate_form_db_gateway=candidate_document_db_gateway,
             candidate_approval_db_gateway=candidate_approval_db_gateway,
             candidate_statement_db_gateway=candidate_statement_db_gateway,
@@ -241,12 +256,18 @@ class CandidateProvider(Provider):
             minio=minio,
             config=config,
             template=template,
+            broker=broker,
         )
 
     candidate_db_gateway = provide(
         CandidateDBGateway,
         scope=Scope.REQUEST,
         provides=AnyOf[CandidateDBGateway, ICandidateDBGateway],
+    )
+    candidate_yandex_form_db_gateway = provide(
+        CandidateYandexFormGateway,
+        scope=Scope.REQUEST,
+        provides=AnyOf[CandidateYandexFormGateway, ICandidateYandexFormGateway],
     )
     candidate_document_db_gateway = provide(
         CandidateFormDBGateway,

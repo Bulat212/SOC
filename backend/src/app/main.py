@@ -50,8 +50,11 @@ container = make_async_container(
     },
 )
 
-
+import logging
 def get_faststream_app() -> FastStream:
+    
+    logging.basicConfig(level=logging.DEBUG)
+
     broker = new_broker(config.broker)
     app = FastStream(broker)
     faststream_integration.setup_dishka(container, app, auto_inject=True)

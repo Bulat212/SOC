@@ -1,14 +1,16 @@
 import datetime
 
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, MenuButtonWebApp, WebAppInfo
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button, ManagedCalendar
+from bot.config import BotConfig
+from bot.presentation.utils.candidate import create_yandex_form_url, format_new_candidate_message
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from bot.application.dto.candidate import UpdateCandidateDTO
 from bot.application.usecase.candidate import CandidateUseCase
-from bot.constants import MIN_AGE, MAX_AGE
+from bot.constants import FORMAT_BIRTHDATE, MIN_AGE, MAX_AGE
 from bot.presentation.button.start_button import StartCandidateKeyboardButton
 from bot.presentation.state.my_data import MyDataState
 
@@ -225,6 +227,7 @@ async def save_click(
         button: Button,
         dialog_manager: DialogManager,
         usecase: FromDishka[CandidateUseCase],
+        config: FromDishka[BotConfig],
 ) -> None:
     data = dialog_manager.start_data
     recruitment_id = None
@@ -248,21 +251,57 @@ async def save_click(
         subject=data.get("subject"),
         graduation_date=data.get("graduation_date"),
     )
-    await usecase.update_candidate(request)
+    update_candidate = await usecase.update_candidate(request)
     if data.get("is_registration"):
         keyboard = StartCandidateKeyboardButton(
             resize_keyboard=True,
             one_time_keyboard=True,
             is_persistent=True,
         )
+
+        username = data.get("username")
+
+        url = create_yandex_form_url(update_candidate, username)
+
+        await cq.bot.set_chat_menu_button(
+            chat_id=cq.message.chat.id,
+            menu_button=MenuButtonWebApp(
+                text="Open",
+                web_app=WebAppInfo(url=url)
+            )
+        )
+        
+        text = format_new_candidate_message(data)
+        await cq.bot.send_message(
+                chat_id=config.group_id,
+                text=text,
+                message_thread_id=config.new_registration_topic_id,
+                parse_mode="HTML",
+            )
+        
         await cq.message.answer(
             text="Поздравляем, Ваша заявка принята. Ваша кандидатура "
                  "будет рассмотрена для поступления в научную роту "
                  "Военной академии связи им С.М. Буденного",
             reply_markup=keyboard(),
         )
+
+
+        request.birthdate=datetime.datetime.strptime(
+            data.get("birthdate"),
+            FORMAT_BIRTHDATE,
+        )
+        request.graduation_date=datetime.datetime.strptime(
+            data.get("graduation_date"),
+            FORMAT_BIRTHDATE,
+        )
+        
+        await usecase.new_registration_soc(request)
+
         await dialog_manager.reset_stack()
         return
+    
+    
     await cq.message.answer(
         text="Ваши данные изменены",
     )

@@ -7,7 +7,7 @@ from app.domain.exception.candidate import (
     CandidateQuoteNotFound,
 )
 from app.domain.exception.document import DocumentNotFound
-from app.domain.model import Candidate, CandidateQuote, CandidateDocument
+from app.domain.model import Candidate, CandidateQuote, CandidateDocument, CandidateFormData
 
 
 class CandidateService:
@@ -75,8 +75,35 @@ class CandidateService:
 
         candidate = Candidate(**context)
         return candidate
+    
+    def add_candidate_data_from_form(
+            self,
+            **data: str | float | datetime.date | None,
+    ) -> CandidateFormData:
+        context = dict()
+        for val in fields(CandidateFormData):
+            context[val.name] = data.get(val.name)
+
+        candidate_form = CandidateFormData(**context)
+        return candidate_form
 
     def get_candidate(
+            self,
+            candidate: Candidate,
+    ) -> dict[str, str | float | datetime.date | None]:
+        data = dict()
+        for key, val in asdict(candidate).items():
+            if key == "is_form" and val is None:
+                data[key] = True
+                continue
+            if key in ("is_statement", "is_approval") and val is None:
+                data[key] = False
+                continue
+            data[key] = val
+        return data
+    
+
+    def get_candidate_from_form(
             self,
             candidate: Candidate,
     ) -> dict[str, str | float | datetime.date | None]:
@@ -107,10 +134,59 @@ class CandidateService:
         for key, val in data.items():
             if val is None:
                 continue
+            # Проверяем, что атрибут существует в объекте candidate
+            if not hasattr(candidate, key):
+                continue
+            
             setattr(candidate, key, val)
 
         return candidate
+    
+    def update_candidate_from_form(
+            self,
+            candidate: Candidate | None,
+            **data: str | float | datetime.date | None,
+    ):
+        if candidate is None:
+            raise CandidateNotFound()
 
+        result = dict()
+
+        for key, val in asdict(candidate).items():
+            if key == "is_form" and val is None:
+                result[key] = True
+                continue
+            if key in ("is_statement", "is_approval") and val is None:
+                result[key] = False
+                continue
+            result[key] = val
+
+        # Обновляем переданными значениями
+        for key, value in data.items():
+            if value is not None:
+                result[key] = value    
+
+        return result
+    
+
+    def update_candidate_form(
+            self,
+            candidate_form: CandidateFormData | None,
+            **data: str | float | datetime.date | None,
+    ) -> CandidateFormData:
+        if candidate_form is None:
+            raise CandidateNotFound()
+
+        for key, val in data.items():
+            if val is None:
+                continue
+            # Проверяем, что атрибут существует в объекте candidate_form
+            if not hasattr(candidate_form, key):
+                continue
+            
+            setattr(candidate_form, key, val)
+
+        return candidate_form
 
 class CandidateQuoteService:
     def add_candidate_quote(

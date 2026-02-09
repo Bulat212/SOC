@@ -1,13 +1,17 @@
 from aiogram import Router, F
 from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.types import Message, MenuButtonWebApp, WebAppInfo, MenuButtonDefault
 from aiogram_dialog import DialogManager, StartMode, ShowMode
 from bot.presentation.state.delegate import RegistrationDelegateState
+from bot.presentation.utils.candidate import create_yandex_form_url
 from dishka import FromDishka
 from dishka.integrations.aiogram import inject
 
 from bot.application.dto.user import UserIDDTO
 from bot.application.usecase.user import UserUseCase
+from bot.application.dto.candidate import CandidateIDDTO
+from bot.application.usecase.candidate import CandidateUseCase
+
 from bot.domain.exception.user import UserNotFound
 from bot.presentation.button.start_button import (
     StartCandidateKeyboardButton,
@@ -18,6 +22,9 @@ from bot.presentation.button.start_button import (
 from bot.presentation.state.registration import RegistrationCandidateState
 from aiogram.exceptions import TelegramBadRequest
 from bot.config import load_config
+
+from aiogram import Bot
+
 
 hello_router = Router()
 
@@ -42,9 +49,15 @@ HELLO_MESSAGE = {
 
 async def start_logic(
         message: Message,
+        bot: Bot,
         dialog_manager: DialogManager,
         usecase: UserUseCase,
+        candidate_usecase: CandidateUseCase,
 ) -> None:
+    await bot.set_chat_menu_button(
+        chat_id=message.chat.id,
+        menu_button=MenuButtonDefault()
+    )
     await dialog_manager.reset_stack(remove_keyboard=True)
     # config = load_config()
     # keyboard = CheckSubscriptionKeyboardButton( 
@@ -67,11 +80,14 @@ async def start_logic(
     #     )
     #     return
     
-    request = UserIDDTO(
+    request_user = UserIDDTO(
+        telegram_id=str(message.from_user.id),
+    )
+    request_candidate = CandidateIDDTO(
         telegram_id=str(message.from_user.id),
     )
     try:
-        user = await usecase.get(request=request)
+        user = await usecase.get(request=request_user)
         if user.is_active or user.role == "director":
             match user.role:
                 case "candidate":
@@ -82,6 +98,18 @@ async def start_logic(
                         resize_keyboard=True,
                         one_time_keyboard=False,
                         is_persistent=True,
+                    )
+                    candidate = await candidate_usecase.get_candidate(request=request_candidate)
+                    tg_username = message.from_user.username
+
+                    url = create_yandex_form_url(candidate, tg_username)
+                    
+                    await bot.set_chat_menu_button(
+                        chat_id=message.chat.id,
+                        menu_button=MenuButtonWebApp(
+                            text="Open",
+                            web_app=WebAppInfo(url=url)
+                        )
                     )
                 case "delegate":
                     text = HELLO_MESSAGE[user.role].format(
@@ -130,7 +158,7 @@ async def start_logic(
         ),
     )
     await dialog_manager.start(
-        state=RegistrationCandidateState.start,
+        state=RegistrationCandidateState.agreement,
         mode=StartMode.NORMAL,
         data={
             "username": message.from_user.username,
@@ -147,10 +175,12 @@ async def start_logic(
 @inject
 async def start_command(
     message: Message,
+    bot: Bot,
     dialog_manager: DialogManager,
     usecase: FromDishka[UserUseCase],
+    candidateUseCase: FromDishka[CandidateUseCase],
 ):
-    await start_logic(message, dialog_manager, usecase)
+    await start_logic(message, bot, dialog_manager, usecase, candidateUseCase)
 
 
 @hello_router.message(F.text == "✅ Проверить подписку")

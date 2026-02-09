@@ -6,6 +6,7 @@ from .candidate import (
     CandidateStatementStorage,
     CandidateApprovalStorage,
     CandidateFormStorage,
+    CandidateFormDataStorage,
 )
 from .document import DocumentStorage, PromoDocumentStorage
 from .faq import FaqStorage
@@ -34,5 +35,6 @@ __all__ = (
     "CandidateStatementStorage",
     "CandidateApprovalStorage",
     "CandidateFormStorage",
+    "CandidateFormDataStorage",
     "DelegateStorage",
 )

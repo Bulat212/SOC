@@ -6,6 +6,7 @@ from app.domain.model import (
     Candidate,
     CandidateQuote,
     CandidateDocument,
+    CandidateFormData,
 )
 
 
@@ -41,6 +42,20 @@ class ICandidateDBGateway(Protocol):
 
     @abstractmethod
     async def delete(self, candidate_id: str): ...
+
+
+class ICandidateYandexFormGateway(Protocol):
+    @abstractmethod
+    async def insert(self, candidate_form: CandidateFormData) -> CandidateFormData: ...
+
+    @abstractmethod
+    async def get(self,
+            telegram_id: str | None,
+    ) -> CandidateFormData | None: ...
+
+    @abstractmethod
+    async def update(self, candidate_form: CandidateFormData) -> CandidateFormData: ...
+
 
 class ICandidateQuoteGateway(Protocol):
     @abstractmethod

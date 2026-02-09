@@ -8,8 +8,9 @@ from app.adapter.db.model import (
     CandidateFormStorage,
     CandidateStatementStorage,
     CandidateApprovalStorage,
+    CandidateFormDataStorage,
 )
-from app.domain.model import Candidate, CandidateDocument
+from app.domain.model import Candidate, CandidateDocument, CandidateFormData
 
 
 class CandidateDBGateway(BaseGateway[Candidate]):
@@ -125,6 +126,115 @@ class CandidateDBGateway(BaseGateway[Candidate]):
             .where(CandidateStorage.id == candidate_id)
         )
         await self.session.execute(stmt)
+
+
+class CandidateYandexFormGateway(BaseGateway[CandidateFormData]):
+    async def insert(self, candidate_form: CandidateFormData) -> CandidateFormData:
+        data = dict()
+        for key, val in asdict(candidate_form).items():
+            data[key] = val
+        stmt = (
+            insert(CandidateFormDataStorage)
+            .values(**data)
+        )
+        await self.session.execute(stmt)
+        return candidate_form
+
+
+    async def get(self,
+            # candidate_id: str | None,
+            telegram_id: str | None,
+    ) -> CandidateFormData | None:
+        stmt = (
+            select(
+                CandidateFormDataStorage,
+            )
+            .where(
+                or_(
+                    CandidateFormDataStorage.telegram_id == telegram_id,
+                    # CandidateFormDataStorage.id == candidate_id,
+                ),
+            )
+        )
+
+        result = await self.session.execute(stmt)
+        row = result.fetchone()
+        if not row:
+            return None
+
+        model = row[0]
+        return CandidateFormData(
+            id=model.id,
+            candidate_id=model.candidate_id,
+            telegram_id=model.telegram_id,
+            first_name=model.first_name,
+            last_name=model.last_name,
+            patronymic=model.patronymic,
+            birthplace=model.birthplace,
+            birthdate=model.birthdate,
+            graduation_date=model.graduation_date,
+            nationality=model.nationality,
+            tg_username=model.tg_username,
+            mail=model.mail,
+            registration_address=model.registration_address,
+            actual_address=model.actual_address,
+            family_status=model.family_status,
+            military_station=model.military_station,
+            health_category=model.health_category,
+            university=model.university,
+            diploma=model.diploma,
+            date_issue_diploma=model.date_issue_diploma,
+            direction_training=model.direction_training,
+            average_score=model.average_score,
+            diploma_topic=model.diploma_topic,
+            international_articles=model.international_articles,
+            patents=model.patents,
+            vac_articles=model.vac_articles,
+            rationalization=model.rationalization,
+            rinc_articles=model.rinc_articles,
+            registration_certificates=model.registration_certificates,
+            scientific_work_experience=model.scientific_work_experience,
+            international_olympiads=model.international_olympiads,
+            president_scholarship=model.president_scholarship,
+            russian_olympiads=model.russian_olympiads,
+            government_scholarship=model.government_scholarship,
+            grant=model.grant,
+            regional_olympiads=model.regional_olympiads,
+            city_olympiads=model.city_olympiads,
+            postgraduate_diploma=model.postgraduate_diploma,
+            unused_academic_degree=model.unused_academic_degree,
+            useful_academic_degree=model.useful_academic_degree,
+            commercial_experience=model.commercial_experience,
+            OPK_experience=model.OPK_experience,
+            exp_research_assistant=model.exp_research_assistant,
+            areas_research=model.areas_research,
+            programming_languages=model.programming_languages,
+            programs=model.programs,
+            secret=model.secret,
+            height=model.height,
+            weight=model.weight,
+            sporting_achievements=model.sporting_achievements,
+            other_sporting_achievements=model.other_sporting_achievements,
+            short_run=model.short_run,
+            long_run=model.long_run,
+            pull_ups=model.pull_ups,
+            chronic_diseases=model.chronic_diseases,
+            tattoos=model.tattoos,
+            find_out=model.find_out,
+        )
+    
+
+    async def update(self, candidate_form: CandidateFormData) -> CandidateFormData:
+        data = dict()
+        for key, val in asdict(candidate_form).items():
+            data[key] = val
+        stmt = (
+            update(CandidateFormDataStorage)
+            .values(**data)
+            .where(CandidateFormDataStorage.id == candidate_form.id)
+        )
+        await self.session.execute(stmt)
+        return candidate_form
 
 
 class _BaseDocumentDBGateway:

@@ -1,7 +1,6 @@
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, MenuButtonDefault, ReplyKeyboardRemove
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
-from aiogram_dialog.widgets.text import Const
 from bot.application.dto.candidate import CandidateIDDTO
 from bot.application.dto.user import UserIDDTO
 from bot.application.usecase.candidate import CandidateUseCase
@@ -57,9 +56,15 @@ async def confirm_delete(
     await usecase_candidate.delete(candidate.id)
     await usecase_user.delete(user.id)
 
+    await cq.bot.set_chat_menu_button(
+        chat_id=cq.message.chat.id,
+        menu_button=MenuButtonDefault()
+    )
+
     await cq.message.answer(
         "🗑️ Ваша кандидатура успешно удалена.\n"
-        "Для повторного участия введите /start"
+        "Для повторного участия введите /start",
+        reply_markup=ReplyKeyboardRemove(),
     )
 
     await dialog_manager.done()

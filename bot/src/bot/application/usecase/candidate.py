@@ -14,8 +14,10 @@ from bot.application.interface.broker.gateway.candidate import (
 from bot.application.interface.broker.gateway.recruitment import (
     IRecruitmentBrokerGateway,
 )
+from bot.domain.model.candidate import Candidate
 from bot.domain.service.candidate import CandidateService
 from bot.domain.service.document import DocumentService
+from bot.presentation.schema.candidate import GetCandidateSchema
 
 
 class CandidateUseCase:
@@ -31,9 +33,10 @@ class CandidateUseCase:
         self.candidate_service = candidate_service
         self.document_service = document_service
 
-    async def add_candidate(self, request: AddCandidateDTO) -> None:
+    async def add_candidate(self, request: AddCandidateDTO) -> GetCandidateSchema:
         candidate = self.candidate_service.add_candidate(**asdict(request))
-        await self.candidate_broker_gateway.add_candidate(candidate)
+        candidate = await self.candidate_broker_gateway.add_candidate(candidate)
+        return candidate
 
     async def get_candidate(
             self,
@@ -62,7 +65,7 @@ class CandidateUseCase:
     async def update_candidate(
             self,
             request: UpdateCandidateDTO,
-    ) -> None:
+    ) -> GetCandidateSchema:
         candidate = await self.candidate_broker_gateway.get_candidate(
             telegram_id=request.telegram_id,
         )
@@ -70,8 +73,9 @@ class CandidateUseCase:
             candidate,
             **asdict(request),
         )
-        await self.candidate_broker_gateway.update_candidate(candidate)
-
+        update_candidate = await self.candidate_broker_gateway.update_candidate(candidate)
+        return update_candidate
+    
     async def get_candidate_document(
             self,
             request: CandidateDocumentNameDTO,
@@ -129,3 +133,5 @@ class CandidateUseCase:
     async def delete(self, candidate_id: str):
         await self.candidate_broker_gateway.delete(candidate_id)
 
+    async def new_registration_soc(self, form_data: Candidate):
+        await self.candidate_broker_gateway.new_registration_soc(form_data=form_data)

@@ -2,11 +2,12 @@ from aiogram.fsm.state import StatesGroup, State
 
 
 class RegistrationCandidateState(StatesGroup):
+    agreement = State()
     start = State()
-    recruitment = State()
     nationality = State()
-    invalid_nationality = State()
     tertiary_education = State()
+    recruitment = State()
+    invalid_nationality = State()
     invalid_tertiary_education = State()
     birthdate = State()
     subject = State()

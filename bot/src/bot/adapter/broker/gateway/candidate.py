@@ -2,6 +2,7 @@ import datetime
 import json
 from dataclasses import asdict
 
+from bot.presentation.schema.candidate import GetCandidateSchema
 from faststream.rabbit.message import RabbitMessage
 
 from bot.adapter.broker.gateway.base import BaseBrokerGateway
@@ -11,7 +12,7 @@ from bot.domain.model.document import Document, DocumentBuff
 
 
 class CandidateBrokerGateway(BaseBrokerGateway):
-    async def add_candidate(self, candidate: Candidate) -> None:
+    async def add_candidate(self, candidate: Candidate) -> GetCandidateSchema:
         data = dict()
         for key, value in asdict(candidate).items():
             if key in ("is_form", "is_statement", "is_approval"):
@@ -20,10 +21,17 @@ class CandidateBrokerGateway(BaseBrokerGateway):
                 data[key] = value.isoformat()
                 continue
             data[key] = value
-        await self.broker.publish(
+        # await self.broker.publish(
+        #     message=data,
+        #     queue="add_candidate",
+        # )
+        msg: GetCandidateSchema = await self.broker.request(
             message=data,
             queue="add_candidate",
+            timeout=5,
         )
+        body = json.loads(msg.body)
+        return GetCandidateSchema(**body)
 
     async def get_candidate(self, telegram_id: str) -> Candidate | None:
         try:
@@ -67,7 +75,7 @@ class CandidateBrokerGateway(BaseBrokerGateway):
 
         return body
 
-    async def update_candidate(self, candidate: Candidate) -> None:
+    async def update_candidate(self, candidate: Candidate) -> GetCandidateSchema:
         data = dict()
         for key, val in asdict(candidate).items():
             if val is None:
@@ -75,10 +83,17 @@ class CandidateBrokerGateway(BaseBrokerGateway):
             if key in ("is_form", "is_statement", "is_approval"):
                 continue
             data[key] = val
-        await self.broker.publish(
+        # await self.broker.publish(
+        #     message=data,
+        #     queue="update_candidate",
+        # )
+        msg: GetCandidateSchema = await self.broker.request(
             message=data,
             queue="update_candidate",
+            timeout=5,
         )
+        body = json.loads(msg.body)
+        return GetCandidateSchema(**body)
 
     async def get_candidate_document(
             self,
@@ -147,4 +162,13 @@ class CandidateBrokerGateway(BaseBrokerGateway):
                 "candidate_id": candidate_id,
             },
             queue="delete_candidate"
+        )
+
+    async def new_registration_soc(
+        self,
+        form_data: Candidate,
+    ) -> None:
+        await self.broker.publish(
+            message=asdict(form_data),
+            queue="new_registration_queue",
         )
