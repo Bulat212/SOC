@@ -10,7 +10,7 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from bot.presentation.getter.get_candidates import get_candidates_list
 from bot.presentation.getter.get_candidates import get_recruitments
-from bot.presentation.on_click.get_candidate import next_page, prev_page, recruitment_click
+from bot.presentation.on_click.get_candidate import candidate_click, next_page, prev_page, recruitment_click
 from bot.presentation.state.get_candidate import GetCandidateState
 
 
@@ -83,7 +83,7 @@ dialog = Dialog(
                         text="{item[first_name]}, Статус заявки:{item[is_approval]}",
                     ),
                     id="candidates_btn",
-                    # on_click=candidate_click,
+                    on_click=candidate_click,
                 ),
                 id="candidates",
                 item_id_getter=lambda item: item["id"],
@@ -99,5 +99,12 @@ dialog = Dialog(
         ),
         state=GetCandidateState.candidate_list,
         getter=get_candidates_list,
+    ),
+    Window(
+        Const(
+            text="Форма кандидата:",
+        ),
+        state=GetCandidateState.candidate_form,
+        # getter=get_candidates_list,
     ),
 )

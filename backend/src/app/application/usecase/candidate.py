@@ -239,6 +239,7 @@ class CandidateUseCase:
         for c in candidates:
             result.append({
                 "id": c.id,
+                "telegram_id": c.telegram_id,
                 "first_name": c.first_name,
                 "is_approval": c.is_approval,
             })

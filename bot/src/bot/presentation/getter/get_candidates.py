@@ -41,6 +41,7 @@ async def get_candidates_list(dialog_manager: DialogManager, usecase: FromDishka
     dialog_manager.dialog_data["page"] = page
     dialog_manager.dialog_data["is_next"] = is_next
     dialog_manager.dialog_data["is_back"] = is_back
+    dialog_manager.dialog_data["current_candidates"] = candidate_list
 
     return {
         "recruitment_name": recruitment["name"],
