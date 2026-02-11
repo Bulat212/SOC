@@ -81,7 +81,7 @@ dialog = Dialog(
     ),
     Window(
         Format(
-            text="Пользователь {name} задал вопрос:\n <b>{question}</b>",
+            text="Пользователь {name} задал вопрос:\n<b>{question}</b>",
         ),
         Row(
             Button(

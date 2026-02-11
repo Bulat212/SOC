@@ -5,9 +5,9 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from bot.application.dto.question import AddQuestionIDDTO
-from bot.application.dto.user import UserIDDTO
+from bot.application.dto.candidate import CandidateIDDTO
 from bot.application.usecase.question import QuestionUseCase
-from bot.application.usecase.user import UserUseCase
+from bot.application.usecase.candidate import CandidateUseCase
 from bot.presentation.button.start_button import StartCandidateKeyboardButton
 from bot.presentation.state.answer import AnswerState
 from bot.presentation.state.question import QuestionState
@@ -97,7 +97,7 @@ async def question_click(
         cq: CallbackQuery,
         button: Button,
         dialog_manager: DialogManager,
-        usecase: FromDishka[UserUseCase],
+        usecase_candidate: FromDishka[CandidateUseCase],
 ) -> None:
     data = dialog_manager.start_data.copy()
     item_id: str = dialog_manager.item_id  # noqa
@@ -105,10 +105,10 @@ async def question_click(
     question_list = data.get("questions")
     question = question_list[int(item_id)]
     user_id = question.get("user_id")
-    request = UserIDDTO(
+    request = CandidateIDDTO(
         telegram_id=user_id,
     )
-    user = await usecase.get(request)
+    candidate = await usecase_candidate.get_candidate(request)
     await dialog_manager.bg(
         user_id=cq.from_user.id,
         chat_id=cq.from_user.id,
@@ -119,6 +119,6 @@ async def question_click(
             "question_id": question.get("question_id"),
             "user_id": user_id,
             "question": question.get("question"),
-            "username": user.full_name or f"@{user.username}",
+            "username": f"{candidate.last_name} {candidate.first_name}",
         },
     )
