@@ -14,6 +14,7 @@ from bot.presentation.on_click.promo import (
     add_promo,
     send_promo,
     delete_promo,
+    send_photo_promo
 )
 from bot.presentation.state.promo import PromoState
 
@@ -56,7 +57,9 @@ dialog = Dialog(
                         text="{item[name]}",
                     ),
                     id="promo_btn",
-                    on_click=send_document,
+                    # on_click=send_document,
+                    on_click=send_photo_promo,
+                    
                 ),
                 id="promo",
                 item_id_getter=lambda item: item["idx"],

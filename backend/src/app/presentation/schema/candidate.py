@@ -80,6 +80,7 @@ class CandidateDocumentNameSchema(Base):
 
 class DeleteCandidateSchema(Base):
     candidate_id: str | None = Field(None)
+    telegram_id: str | None = Field(None)
 
 class FormDataSchema(Base):
     candidate_id: str

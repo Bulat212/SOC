@@ -1,6 +1,10 @@
 import datetime
 from bot.constants import FORMAT_BIRTHDATE
 from urllib.parse import urlencode
+from typing import List, Dict, Any, Optional
+import re
+
+from bot.config import load_config
 
 
 def format_new_candidate_message(data: dict) -> str:
@@ -39,7 +43,7 @@ def format_new_candidate_message(data: dict) -> str:
 
 
 def create_yandex_form_url(data, username) ->str: 
-
+    config = load_config()
     params = {
         "first_name": data.first_name,
         "last_name": data.last_name,
@@ -56,10 +60,49 @@ def create_yandex_form_url(data, username) ->str:
         "graduation_date": data.graduation_date,
         "find_out": f"Узнал о научной роте: {data.find_out}",
     }
-
-    url = "https://forms.yandex.ru/u/694be999d046887fae3691b6?" + urlencode(
+    url = config.yandex_form_url + urlencode(
         params,
         doseq=True,
         encoding="utf-8",
     )
     return url
+
+
+
+
+def filter_recruitments_by_date(
+    recruitments: List[Dict[str, Any]],
+    check_date: Optional[datetime.datetime] = None
+) -> List[Dict[str, Any]]:
+    if check_date is None:
+        check_date = datetime.datetime.now()
+    
+    current_year = check_date.year
+    current_month = check_date.month
+    current_day = check_date.day
+    
+    july_pattern = re.compile(r'^Июль\s+(\d{4})$')
+    december_pattern = re.compile(r'^Декабрь\s+(\d{4})$')
+    
+    filtered = []
+    for recruitment in recruitments:
+        name = recruitment.get("name", "")
+       
+        july_match = july_pattern.match(name)
+        if july_match:
+            recruitment_year = int(july_match.group(1))
+            # Скрыть, если текущая дата после 25 марта
+            if current_month > 3 or (current_month == 3 and current_day > 25) or current_year > recruitment_year:
+                continue
+        
+        # Проверка для "Декабрь YYYY"
+        december_match = december_pattern.match(name)
+        if december_match:
+            recruitment_year = int(december_match.group(1))
+            # Скрыть, если текущая дата после 25 сентября
+            if current_month > 9 or (current_month == 9 and current_day > 25) or current_year > recruitment_year:
+                continue
+        
+        filtered.append(recruitment)
+    
+    return filtered

@@ -156,10 +156,11 @@ class CandidateBrokerGateway(BaseBrokerGateway):
             queue=queue,
         )
 
-    async def delete(self, candidate_id: str):
+    async def delete(self, candidate_id: str, telegram_id: str):
         await self.broker.publish(
             message={
                 "candidate_id": candidate_id,
+                "telegram_id": telegram_id,
             },
             queue="delete_candidate"
         )

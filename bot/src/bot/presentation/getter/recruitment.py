@@ -5,6 +5,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from bot.application.usecase.recruitment import RecruitmentUseCase
+from bot.presentation.utils.candidate import filter_recruitments_by_date
 
 
 @inject
@@ -29,12 +30,20 @@ async def get_recruitments(
     for idx, val in enumerate(recruitments.values):
         result.append(
             {
-                "idx": idx,
                 "id": val.id,
                 "name": val.name,
             },
         )
-    dialog_manager.start_data["recruitments"] = result
-    return {
-        "recruitments": result,
-    }
+
+    filtered_result = filter_recruitments_by_date(result)
+    result_with_idx = []
+    for idx, val in enumerate(filtered_result):
+        result_with_idx.append(
+            {
+                "idx": idx,
+                "id": val.get("id"),
+                "name": val.get("name"),
+            },
+        )
+    dialog_manager.start_data["recruitments"] = result_with_idx
+    return {"recruitments": result_with_idx}

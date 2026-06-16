@@ -179,7 +179,7 @@ async def set_average_score(
             state=RegistrationCandidateState.invalid_average_score,
         )
         return
-    if score <= 4:
+    if score < 4:
         await manager.switch_to(
             state=RegistrationCandidateState.low_average_score,
         )

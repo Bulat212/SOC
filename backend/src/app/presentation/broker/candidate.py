@@ -171,7 +171,8 @@ async def delete_candidate(
         usecase: FromDishka[CandidateUseCase],
 ):
     candidate_id = data.candidate_id
-    await usecase.delete_candidate(candidate_id)
+    telegram_id = data.telegram_id
+    await usecase.delete_candidate(candidate_id, telegram_id)
 
 
 @candidate_router.subscriber(

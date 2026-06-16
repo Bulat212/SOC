@@ -27,6 +27,7 @@ class BotConfig:
     channel_id: str
     broker: BrokerConfig
     redis: RedisConfig
+    yandex_form_url: str
 
 
 def _get_config_path():
@@ -53,6 +54,7 @@ def load_config() -> BotConfig:
         questions_topic_id=data["bot"].get("questions_topic_id"),
         new_registration_topic_id=data["bot"].get("new_registration_topic_id"),
         channel_id=data["bot"].get("channel_id"),
+        yandex_form_url=data["bot"].get("yandex_form_url"),
         broker=BrokerConfig(
             **data["broker"],
         ),

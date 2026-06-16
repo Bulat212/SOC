@@ -52,8 +52,7 @@ async def confirm_delete(
 
     candidate_request = CandidateIDDTO(telegram_id=telegram_id)
     candidate = await usecase_candidate.get_candidate(candidate_request)
-
-    await usecase_candidate.delete(candidate.id)
+    await usecase_candidate.delete(candidate.id, telegram_id)
     await usecase_user.delete(user.id)
 
     await cq.bot.set_chat_menu_button(

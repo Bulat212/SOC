@@ -130,8 +130,8 @@ class CandidateUseCase:
         await cls_method(document_buff)
 
         
-    async def delete(self, candidate_id: str):
-        await self.candidate_broker_gateway.delete(candidate_id)
+    async def delete(self, candidate_id: str, telegram_id: str):
+        await self.candidate_broker_gateway.delete(candidate_id, telegram_id)
 
     async def new_registration_soc(self, form_data: Candidate):
         await self.candidate_broker_gateway.new_registration_soc(form_data=form_data)

@@ -96,7 +96,8 @@ def include_routers(dp: Dispatcher):
         delegate_data_dialog.dialog,
         delegate_dialog.dialog,
     )
-
+import logging
+logger = logging.getLogger(__name__)
 
 async def start_bot(dp: Dispatcher, bot: Bot) -> None:
     try:
@@ -104,8 +105,8 @@ async def start_bot(dp: Dispatcher, bot: Bot) -> None:
             bot,
             skip_updates=True,
         )
-    except AiogramError:
-        pass
+    except AiogramError as e:
+        logger.error(f"Polling failed: {e}", exc_info=True)
     finally:
         await bot.session.close()
 
@@ -142,12 +143,15 @@ def get_storage(url: str) -> RedisStorage:
 
 async def main() -> None:
     config = load_config()
-    session = AiohttpSession(
-        api=TelegramAPIServer.from_base(
-            config.telegram_api_url,
-            is_local=True,
-        ),
-    )
+    # logger.info(config.telegram_api_url)
+    # print(config.telegram_api_url)
+    # session = AiohttpSession(#83lKU17rGKnD
+    #     api=TelegramAPIServer.from_base(
+    #         config.telegram_api_url,
+    #         is_local=True,
+    #     ),
+    # )
+    session = AiohttpSession()  # без TelegramAPIServer
     bot = Bot(
         token=config.token,
         session=session,

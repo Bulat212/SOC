@@ -548,13 +548,21 @@ class CandidateUseCase:
         return GetDocumentDTO(**data)
 
 
-    async def delete_candidate(self, candidate_id: str):
+    async def delete_candidate(self, candidate_id: str, telegram_id: str):
         await self._delete_candidate_files(context={"id": candidate_id})
         await self.candidate_approval_db_gateway.delete(candidate_id)
         await self.candidate_form_db_gateway.delete(candidate_id)
         await self.candidate_statement_db_gateway.delete(candidate_id)
         await self.status_db_gateway.delete(candidate_id)
         await self.candidate_db_gateway.delete(candidate_id)
+
+        await self.broker.publish(
+            message={
+                "telegram_id": telegram_id,
+            },
+            queue="delete_candidate_for_soc",
+        )
+
         await self.db_session.commit()
 
 
